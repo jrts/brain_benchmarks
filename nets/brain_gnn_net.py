@@ -31,6 +31,11 @@ class BrainGNNNet(torch.nn.Module):
         self.ratio = 0.5
         self.k = 32
         self.R = net_params['in_dim']
+        self.edge_dim = net_params['edge_dim']
+
+        if self.edge_dim > 1:
+            self.edge_lin = nn.Linear(self.edge_dim, 1)
+            self.edge_act = nn.Sigmoid()
 
         self.n1 = nn.Sequential(nn.Linear(self.R, self.k, bias=False), nn.ReLU(), nn.Linear(self.k, self.dim1 * self.indim))
         self.conv1 = MyNNConv(self.indim, self.dim1, self.n1, normalize=False)
@@ -54,6 +59,10 @@ class BrainGNNNet(torch.nn.Module):
         x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
         device = x.device
         num_nodes = x.shape[1]
+
+        if self.edge_dim > 1:
+            edge_attr = self.edge_lin(edge_attr)
+            edge_attr = self.edge_act(edge_attr)
 
         batch = []
         pos = []
@@ -102,15 +111,15 @@ class BrainGNNNet(torch.nn.Module):
 
     def loss(self, pred, label):
         lamb0 = 1
-        lamb1 = 0
-        lamb2 = 0
+        lamb1 = 0.1
+        lamb2 = 0.1
         lamb3 = 0.1
         lamb4 = 0.1
         lamb5 = 0.1
         criterion = nn.CrossEntropyLoss()
         loss_c = criterion(pred, label)
-        loss_p1 = (torch.norm(self.pool1.weight, p=2) - 1) ** 2
-        loss_p2 = (torch.norm(self.pool2.weight, p=2) - 1) ** 2
+        loss_p1 = (torch.norm(self.pool1.select.weight, p=2) - 1) ** 2
+        loss_p2 = (torch.norm(self.pool2.select.weight, p=2) - 1) ** 2
         loss_tpk1 = self.topk_loss(self.s1, self.ratio)
         loss_tpk2 = self.topk_loss(self.s2, self.ratio)
         loss_consist = 0

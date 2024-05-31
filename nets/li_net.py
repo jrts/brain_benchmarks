@@ -31,6 +31,8 @@ class LINet(torch.nn.Module):
         self.gap = AvgPooling()
         self.gmp = MaxPooling()
 
+        self.edge_dim = net_params['edge_dim']
+
         n1 = nn.Sequential(nn.Linear(1, 1), nn.ReLU(), nn.Linear(1, in_dim * indim))
         self.conv1 = NNConv(indim, in_dim, n1, 'sum')
         if self.poolmethod == 'topk':
@@ -49,9 +51,10 @@ class LINet(torch.nn.Module):
         self.bn4 = torch.nn.BatchNorm1d(out_dim)
         self.fc2 = torch.nn.Linear(out_dim, hidden_dim)
         self.bn5 = torch.nn.BatchNorm1d(hidden_dim)
-        self.fc3 = torch.nn.Linear(hidden_dim, net_params['n_classes'] )
+        self.fc3 = torch.nn.Linear(hidden_dim, net_params['n_classes'])
 
     def forward(self, g, h, e):
+
         h = self.conv1(g, h, e).flatten(1)  # h: [4000, 17*8]
         g, h, _, score1, e = self.pool1(g, h, e)  # h: [2000, 17*8]
         g1 = torch.cat([self.gap(g, h), self.gmp(g, h)], dim=-1)  # g1: [20, 17*8*2]

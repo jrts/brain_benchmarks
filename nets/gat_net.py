@@ -24,8 +24,8 @@ class GATNet(nn.Module):
         in_feat_dropout = net_params['in_feat_dropout']
         dropout = net_params['dropout']
         n_layers = net_params['L']
-        # self.GAT_Layer = 'CustomGATLayerEdgeReprFeat'
-        self.GAT_Layer = 'GATLayer'
+        self.GAT_Layer = 'CustomGATLayerEdgeReprFeat'
+        # self.GAT_Layer = 'GATLayer'
         self.readout = net_params['readout']
         self.batch_norm = net_params['batch_norm']
         self.residual = net_params['residual']

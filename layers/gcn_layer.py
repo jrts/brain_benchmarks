@@ -42,8 +42,8 @@ class GCNLayer(nn.Module):
         # self.batchnorm_h = nn.BatchNorm1d(out_dim)
         # self.batchnorm_e = nn.BatchNorm1d(out_dim)
         self.batchnorm_h = Norm('bn', out_dim)
-        # if e_feat:
-        self.batchnorm_e = Norm('bn', out_dim)
+        if e_feat:
+            self.batchnorm_e = Norm('bn', out_dim)
         self.activation = activation
         self.dropout = nn.Dropout(dropout)
         if self.dgl_builtin == False:
@@ -55,7 +55,7 @@ class GCNLayer(nn.Module):
 
         # Sends a message of node feature h
         # Equivalent to => return {'m': edges.src['h']}
-        self.message_func = fn.copy_u('h', 'm') # if not e_feat else fn.u_mul_e('h', 'e', 'm')
+        self.message_func = fn.copy_u('h', 'm') if not e_feat else fn.u_mul_e('h', 'e', 'm')
         self.reduce_func = fn.mean('m', 'h')
 
     # def forward(self, g, feature):
@@ -83,32 +83,32 @@ class GCNLayer(nn.Module):
         
     def forward(self, g, feature, e):
         h_in = feature   # to be used for residual connection
-        # e_in = e
+        e_in = e
 
         if self.dgl_builtin == False:
             g.ndata['h'] = feature
-            # g.edata['e'] = e
+            g.edata['e'] = e
             g.update_all(self.message_func, self.reduce_func)
             g.apply_nodes(func=self.apply_mod)
             h = g.ndata['h'] # result of graph convolution
-            # e = g.edata['e']
+            e = g.edata['e']
         else:
             h = self.conv(g, feature)
 
         if self.batch_norm:
             h = self.batchnorm_h(g, h) # batch normalization
-            # e = self.batchnorm_e(g, e) # batch normalization
+            e = self.batchnorm_e(g, e) # batch normalization
        
         if self.activation:
             h = self.activation(h)
-            # e = self.activation(e)
+            e = self.activation(e)
         
         if self.residual:
             h = h_in + h # residual connection
-            # e = e_in + e
+            e = e_in + e
             
         h = self.dropout(h)
-        # e = self.dropout(e)
+        e = self.dropout(e)
         return h, e
     
     def __repr__(self):

@@ -22,6 +22,7 @@
         "freeze_center": true,
         "orthogonal": true,
         "edge_feat": false,
-        "project_assignment": true
+        "project_assignment": true,
+        "hidden_dim": 48
     }
 }

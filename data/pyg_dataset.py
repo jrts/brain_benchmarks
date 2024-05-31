@@ -3,7 +3,10 @@ import torch
 import numpy as np
 from torch_geometric.data import InMemoryDataset, Data
 import csv
+from .coordinates_loader import load_coords
 
+import random
+random.seed(42)
 
 class PYGDataset(InMemoryDataset):
 
@@ -23,12 +26,12 @@ class PYGDataset(InMemoryDataset):
         return len(torch.unique(self.data.y))
 
     def edge_dim(self):
-        return 1
+        return self.data.edge_dim
 
 
     @property
     def processed_file_names(self):
-        return [f"{self.name.split('.')[0]}_{self.dataset_suffix}_processed.pt"]
+        return [f"{self.name.split('.')[0]}_baseline_{self.dataset_suffix}_processed.pt"]
     
 
     def process(self):
@@ -38,6 +41,10 @@ class PYGDataset(InMemoryDataset):
 
         num_nodes = matrices.shape[1]
         data_list = []
+
+        if 'spatial' in self.dataset_suffix:
+            dist_mat, coords, _, _ = load_coords(self.name.split('_')[1], num_nodes, True)
+
         for idx, (mat, label) in enumerate(zip(matrices, labels)):
             # make sure the diagonal nodes are not included
             medium = np.percentile(mat, 50)
@@ -63,6 +70,16 @@ class PYGDataset(InMemoryDataset):
 
             num_edges = selected_edges.shape[1]
             edge_attr = mat[selected_edges[0], selected_edges[1]].reshape((-1, 1))
+            
+            if 'spatial' in self.dataset_suffix:
+                dists_attr = dist_mat[selected_edges[0], selected_edges[1]].reshape((-1, 1))
+                coords_attr = np.concatenate((coords[selected_edges[0]], coords[selected_edges[1]]), axis=-1)
+
+                one_hot = np.zeros((edge_attr.shape[0], num_nodes))
+                one_hot[np.arange(edge_attr.shape[0]), selected_edges[0]] = 1
+                one_hot[np.arange(edge_attr.shape[0]), selected_edges[1]] = 1
+
+                edge_attr = np.concatenate((edge_attr, one_hot, dists_attr, coords_attr), axis=-1)
                     
             data = Data(
                 x=torch.FloatTensor(mat), 
@@ -74,7 +91,6 @@ class PYGDataset(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         data.num_nodes = num_nodes
-        data.num_edges = num_edges
         data.edge_dim = edge_attr.shape[1]
         data.n_classes = len(np.unique(labels))
         torch.save((data, slices), self.processed_paths[0])

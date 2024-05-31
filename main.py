@@ -219,6 +219,10 @@ def main():
 
     if args.batch_size is not None:
         params['batch_size'] = int(args.batch_size)
+        if DATASET_NAME.split('_')[0] in ['taowu', 'neurocon', 'matai']:
+            params['batch_size'] = 4
+        elif DATASET_NAME.split('_')[0] in ['adni'] and MODEL_NAME in ['BrainGNN']:
+            params['batch_size'] = 24
     if args.init_lr is not None:
         params['init_lr'] = float(args.init_lr)
     if args.lr_reduce_factor is not None:

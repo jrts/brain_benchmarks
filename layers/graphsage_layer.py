@@ -30,7 +30,7 @@ class GraphSageLayer(nn.Module):
         
         self.dropout = nn.Dropout(p=dropout)
 
-        self.message_func = fn.copy_u('h', 'm') # if not e_feat else fn.u_mul_e('h', 'e', 'm')
+        self.message_func = fn.copy_u('h', 'm') if not e_feat else fn.u_mul_e('h', 'e', 'm')
 
         if dgl_builtin == False:
             self.nodeapply = NodeApply(in_feats, out_feats, activation, dropout,
@@ -54,14 +54,14 @@ class GraphSageLayer(nn.Module):
 
     def forward(self, g, h, e):
         h_in = h              # for residual connection
-        # e_in = e
+        e_in = e
         
         if self.dgl_builtin == False:
             h = self.dropout(h)
             e = self.dropout(e)
             g.ndata['h'] = h
-            # g.edata['e'] = e
-            #g.update_all(fn.copy_src(src='h', out='m'), 
+            g.edata['e'] = e
+            # g.update_all(fn.copy_src(src='h', out='m'), 
             #             self.aggregator,
             #             self.nodeapply)
             if self.aggregator_type == 'maxpool':
@@ -73,17 +73,17 @@ class GraphSageLayer(nn.Module):
             else:
                 g.update_all(self.message_func, fn.mean('m', 'c'), self.nodeapply)
             h = g.ndata['h']
-            # e = g.edata['e']
+            e = g.edata['e']
         else:
             h = self.sageconv(g, h)
 
         if self.batch_norm:
             h = self.batchnorm_h(g, h)
-            # e = self.batchnorm_e(g, e)
+            e = self.batchnorm_e(g, e)
         
         if self.residual:
             h = h_in + h       # residual connection
-            # e = e_in + e
+            e = e_in + e
         
         return h, e
     

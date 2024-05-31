@@ -6,6 +6,7 @@ import csv
 import dgl
 from tqdm import tqdm
 import random
+from .coordinates_loader import load_coords
 random.seed(42)
 
 
@@ -40,6 +41,9 @@ class DGLDataset(torch.utils.data.Dataset):
         self.num_nodes = matrices.shape[1]
 
         print("[!] Dataset: ", self.name)
+
+        if 'spatial' in threshold:
+            dist_mat, coords, _, _ = load_coords(dataset_name.split('_')[1], self.num_nodes, True)
 
         data = []
         for mat, label in zip(matrices, labels):
@@ -84,7 +88,20 @@ class DGLDataset(torch.utils.data.Dataset):
             g = dgl.graph(data=([], []), num_nodes=self.num_nodes)
             g.add_edges(selected_edges[0], selected_edges[1])
             # if edge_feature:
-            g.edata['feat'] = torch.from_numpy(mat[selected_edges[0], selected_edges[1]]).float().unsqueeze(-1)
+
+            edge_attr = mat[selected_edges[0], selected_edges[1]].reshape((-1, 1))
+            
+            if 'spatial' in threshold:
+                dists_attr = dist_mat[selected_edges[0], selected_edges[1]].reshape((-1, 1))
+                coords_attr = np.concatenate((coords[selected_edges[0]], coords[selected_edges[1]]), axis=-1)
+
+                one_hot = np.zeros((edge_attr.shape[0], self.num_nodes))
+                one_hot[np.arange(edge_attr.shape[0]), selected_edges[0]] = 1
+                one_hot[np.arange(edge_attr.shape[0]), selected_edges[1]] = 1
+
+                edge_attr = np.concatenate((edge_attr, one_hot, dists_attr, coords_attr), axis=-1)
+
+            g.edata['feat'] = torch.from_numpy(edge_attr).float()
             g.ndata['feat'] = torch.from_numpy(mat).float()
 
             data.append([g, label])
@@ -100,7 +117,7 @@ class DGLDataset(torch.utils.data.Dataset):
 
         self.n_folds = len(self.train)
         
-        print("Time taken: {:.4f}s".format(time.time()-t0))
+        print("Time taken: {:.4f}s".format(time.time() - t0))
 
 
     def load_splits(self, splits_base_url, dataset):
