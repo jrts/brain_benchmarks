@@ -23,5 +23,8 @@ pip install torch-geometric tensorboard scikit-learn
 pip install dgl-cu116 -f https://data.dgl.ai/wheels/repo.html
 ```
 
+### Brain Datasets
+[[Figshare](https://auckland.figshare.com/articles/dataset/NeurIPS_2022_Datasets/21397377)] [[Github](https://github.com/brainnetuoa/data_driven_network_neuroscience)]
+
 ### Credit
-Benchmarking Graph Neural Networks [[paper](https://arxiv.org/abs/2003.00982)] [[Github](https://github.com/graphdeeplearning/benchmarking-gnns)]
+Benchmarking Graph Neural Networks [[Paper](https://arxiv.org/abs/2003.00982)] [[Github](https://github.com/graphdeeplearning/benchmarking-gnns)]
