@@ -1,7 +1,7 @@
 ## Brain Network Analysis Benchmarks
 
 ### Implementations ([`./nets`](./nets))
-|  Name              | Source |
+|  Name              | Source  |
 | ------------------ | ------- |
 | `bnt`              | [Brain Network Transformer](https://arxiv.org/abs/2210.06681) |
 | `brain_gnn_net`    | [BrainGNN](https://www.sciencedirect.com/science/article/pii/S1361841521002784) |
@@ -12,7 +12,7 @@
 | `gcn_net`          | [Graph Convolutional Networks](https://arxiv.org/abs/1609.02907) |
 | `gin_net`          | [Graph Isomorphism Networks](https://arxiv.org/abs/1810.00826) |
 | `graphsage_net`    | [GraphSAGE](https://arxiv.org/abs/1706.02216) |
-| `gcn_net`          | [Pooling Regularized Graph Neural Network for fMRI Biomarker Analysis](https://arxiv.org/abs/2007.14589) |
+| `li_net`           | [Pooling Regularized Graph Neural Network for fMRI Biomarker Analysis](https://arxiv.org/abs/2007.14589) |
 | `prgnn_net`        | [Proximity Relational Graph Neural Network](https://www.sciencedirect.com/science/article/abs/pii/S0925231224006283) |
 
 ### Environment
